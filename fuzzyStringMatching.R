@@ -130,3 +130,81 @@ for(i in 1:nrow(dist.name.custom)){
 }
 # let's have a look at the results
 View(match.s1.s2)
+
+
+##
+x <- c('foo', 'bar')
+
+# if we decrease the maximum allowd distance, we get 
+amatch('fu',x,maxDist=1)
+
+
+# just like with 'match' you can control the output of no-matches:
+amatch('fu',x,maxDist=1,nomatch=0)
+
+
+# to see if 'fu' matches approximately with any element of x:
+ain('fu',x)
+
+
+# however, if we allow for larger distances
+ain('fu',x,maxDist=2)
+
+
+
+
+library(stringdist)
+d <- expand.grid(source1.devices$name,source2.devices$name) # Distance matrix in long form
+names(d) <- c("a_name","b_name")
+d$dist <- stringdist(d$a_name,d$b_name, method="jw") # String edit distance (use your favorite function here)
+
+# Greedy assignment heuristic (Your favorite heuristic here)
+greedyAssign <- function(a,b,d){
+  x <- numeric(length(a)) # assgn variable: 0 for unassigned but assignable, 
+  # 1 for already assigned, -1 for unassigned and unassignable
+  while(any(x==0)){
+    min_d <- min(d[x==0]) # identify closest pair, arbitrarily selecting 1st if multiple pairs
+    a_sel <- a[d==min_d & x==0][1] 
+    b_sel <- b[d==min_d & a == a_sel & x==0][1] 
+    x[a==a_sel & b == b_sel] <- 1
+    x[x==0 & (a==a_sel|b==b_sel)] <- -1
+  }
+  cbind(a=a[x==1],b=b[x==1],d=d[x==1])
+}
+res = data.frame(greedyAssign(as.character(d$a_name),as.character(d$b_name),d$dist))
+head(res)
+View(res)
+
+
+#install.packages('fuzzywuzzyR')
+library(fuzzywuzzyR)
+
+word = "new york jets"
+
+choices = c("Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys")
+
+
+#------------
+# processor :
+#------------
+
+init_proc = FuzzUtils$new()      # initialization of FuzzUtils class to choose a processor
+
+PROC = init_proc$Full_process    # processor-method
+
+PROC1 = tolower                  # base R function ( as an example for a processor )
+
+#---------
+# scorer :
+#---------
+
+init_scor = FuzzMatcher$new()    # initialization of the scorer class
+
+SCOR = init_scor$WRATIO          # choosen scorer function
+
+
+init <- FuzzExtract$new()        # Initialization of the FuzzExtract class
+
+
+init$Extract(string = word, sequence_strings = choices, processor = PROC, scorer = SCOR)
+
